@@ -3,14 +3,19 @@ package com.xrvislab.myrecipe;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.content.ContentValues;
-import android.content.Intent;
+import android.content.res.AssetManager;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
+import android.widget.ImageView;
 import android.widget.TextView;
+
+import java.io.IOException;
 
 public class MainActivity extends AppCompatActivity {
     private Button next;
@@ -20,12 +25,14 @@ public class MainActivity extends AppCompatActivity {
     private Button query;
     private TextView textView;
     private MyDatabaseHelper dbHelper;
+    private ImageView imageView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         dbHelper = new MyDatabaseHelper(this, "EsliteBookstore.db", null, 1); //创建一个MyDatabaseHelper对象
+
         createDb = (Button) findViewById(R.id.create_database);
         createDb.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -42,7 +49,7 @@ public class MainActivity extends AppCompatActivity {
                 ContentValues values = new ContentValues();
                 //组装第一条数据
                 values.put("name", "人间词话");
-                values.put("author", "王国维");
+                values.put("author", "img/orange wings/【香橙烤翅】的做法.jpg");
                 values.put("price", 19.9);
                 //插入第一条数据
                 db.insert("Book", null, values);
@@ -86,5 +93,15 @@ public class MainActivity extends AppCompatActivity {
                 cursor.close();
             }
         });
+
+        AssetManager am = this.getAssets();
+        imageView = (ImageView) findViewById(R.id.imageView);
+        Bitmap bm = null;
+        try {
+            bm = BitmapFactory.decodeStream(am.open("img/orange wings/【香橙烤翅】的做法.jpg"));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        imageView.setImageBitmap(bm);
     }
 }
