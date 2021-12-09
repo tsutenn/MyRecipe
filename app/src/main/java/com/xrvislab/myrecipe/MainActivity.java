@@ -16,6 +16,7 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import java.io.IOException;
+import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
     private Button next;
@@ -24,20 +25,23 @@ public class MainActivity extends AppCompatActivity {
     private Button update;
     private Button query;
     private TextView textView;
-    private MyDatabaseHelper dbHelper;
+//    private MyDatabaseHelper dbHelper;
+    private DatabaseManager dbManager;
     private ImageView imageView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        dbHelper = new MyDatabaseHelper(this, "EsliteBookstore.db", null, 1); //创建一个MyDatabaseHelper对象
-
+        dbManager = DatabaseManager.New(this);
+//        dbHelper = new MyDatabaseHelper(this, "MyRecipe.db", null, 1); //创建一个MyDatabaseHelper对象
         createDb = (Button) findViewById(R.id.create_database);
         createDb.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                dbHelper.getWritableDatabase(); //getReadable/WritableDatabase(), 返回一个SQLiteDatabase对象，经由该对象就可以对数据进行crud操作。
+                dbManager.addUser("c1tun", "1234");
+                Log.d("User test", dbManager.queryUser("c1tun").toString());
+                Log.d("User test", dbManager.queryUser(1).toString());
             }
         });
 
@@ -45,21 +49,13 @@ public class MainActivity extends AppCompatActivity {
         add.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                SQLiteDatabase db = dbHelper.getWritableDatabase();
-                ContentValues values = new ContentValues();
-                //组装第一条数据
-                values.put("name", "人间词话");
-                values.put("author", "img/orange wings/【香橙烤翅】的做法.jpg");
-                values.put("price", 19.9);
-                //插入第一条数据
-                db.insert("Book", null, values);
-                values.clear();
-                //组装第二条数据
-                values.put("name", "废都");
-                values.put("author", "贾平凹");
-                values.put("price", 16.9);
-                //插入第一条数据
-                db.insert("Book", null, values);
+                if(dbManager.isStared(1, 1)){
+                    Log.d("Star test", " " + dbManager.removeStar(1, 1));
+                }
+                else{
+                    Log.d("Star test", " " + dbManager.addStar(1, 1));
+                }
+                Log.d("Star test", dbManager.queryUser("c1tun").toString());
             }
         });
 
@@ -67,10 +63,13 @@ public class MainActivity extends AppCompatActivity {
         update.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                SQLiteDatabase db = dbHelper.getWritableDatabase();
-                ContentValues values = new ContentValues();
-                values.put("price", 9.99);
-                db.update("Book", values, "name = ?", new String[] {"人间词话"});
+                if(dbManager.isStared(1, 2)){
+                    Log.d("Star test", " " + dbManager.removeStar(1, 2));
+                }
+                else{
+                    Log.d("Star test", " " + dbManager.addStar(1, 2));
+                }
+                Log.d("Star test", dbManager.queryUser(1).toString());
             }
         });
 
@@ -78,19 +77,10 @@ public class MainActivity extends AppCompatActivity {
         query.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                SQLiteDatabase db = dbHelper.getWritableDatabase();
-                Cursor cursor = db.query("Book", null, null, null, null, null, null);
-                if (cursor.moveToFirst()) {
-                    do {
-                        String name = cursor.getString(cursor.getColumnIndex("name"));
-                        String author = cursor.getString(cursor.getColumnIndex("author"));
-                        double price = cursor.getDouble(cursor.getColumnIndex("price"));
-                        Log.d("MainActivity", "book name is " + name);
-                        Log.d("MainActivity", "book author is " + author);
-                        Log.d("MainActivity", "book price is " + price);
-                    } while (cursor.moveToNext());
+                List<RecipeItem> items = dbManager.randomQuery(4);
+                for(int i = 0; i < items.size(); i++){
+                    Log.d("recipe item", items.get(i).toString());
                 }
-                cursor.close();
             }
         });
 
