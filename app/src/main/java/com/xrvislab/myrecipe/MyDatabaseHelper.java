@@ -30,7 +30,8 @@ public class MyDatabaseHelper extends SQLiteOpenHelper {
     public static final String CREATE_STAR = "create table Star (" +
             "star_id integer primary key autoincrement," +
             "recipe_id integer," +
-            "user_id integer)";
+            "user_id integer," +
+            "date text)";
 
     private Context mContext;
 

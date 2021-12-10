@@ -12,11 +12,11 @@ public class UserItem {
     public final float weight;
     public final float target_weight;
 
-    public final List<Integer> stars;
+    public final List<StarItem> stars;
 
     private final String password;
 
-    public UserItem(int id, String username, String password, float height, float weight, float target_weight, List<Integer> stars){
+    public UserItem(int id, String username, String password, float height, float weight, float target_weight, List<StarItem> stars){
         this.id = id;
         this.username = username;
         this.password = password;
@@ -24,7 +24,7 @@ public class UserItem {
         this.weight = weight;
         this.target_weight = target_weight;
 
-        this.stars = new ArrayList<Integer>();
+        this.stars = new ArrayList<StarItem>();
         this.stars.addAll(stars);
     }
 
@@ -36,10 +36,10 @@ public class UserItem {
         this.weight = weight;
         this.target_weight = target_weight;
 
-        this.stars = new ArrayList<Integer>();
+        this.stars = new ArrayList<StarItem>();
     }
 
-    public UserItem(int id, String username, String password, List<Integer> stars){
+    public UserItem(int id, String username, String password, List<StarItem> stars){
         this.id = id;
         this.username = username;
         this.password = password;
@@ -47,7 +47,7 @@ public class UserItem {
         this.weight = 0f;
         this.target_weight = 0f;
 
-        this.stars = new ArrayList<Integer>();
+        this.stars = new ArrayList<StarItem>();
         this.stars.addAll(stars);
     }
 
@@ -59,7 +59,7 @@ public class UserItem {
         this.weight = 0f;
         this.target_weight = 0f;
 
-        this.stars = new ArrayList<Integer>();
+        this.stars = new ArrayList<StarItem>();
     }
 
     public boolean check(String password){
@@ -74,7 +74,7 @@ public class UserItem {
     public String toString(){
         String rnt = id + " " + username + " " + password + " " + height + " " + weight + " " + target_weight + " {";
         for(int i = 0; i < stars.size(); i++){
-            rnt = rnt + " " + stars.get(i);
+            rnt = rnt + " (" + stars.get(i) + ")";
         }
         rnt = rnt + " }\n";
         return rnt;

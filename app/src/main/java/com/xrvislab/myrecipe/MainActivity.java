@@ -77,10 +77,9 @@ public class MainActivity extends AppCompatActivity {
         query.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                List<RecipeItem> items = dbManager.randomQuery(4);
-                for(int i = 0; i < items.size(); i++){
-                    Log.d("recipe item", items.get(i).toString());
-                }
+                Log.d("Star test", dbManager.getStarDate(1, 1));
+                Log.d("Star test", dbManager.getStarDate(1, 2));
+                Log.d("Star test", dbManager.getStarDate(1, 3));
             }
         });
 

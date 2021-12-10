@@ -312,10 +312,11 @@ public class DatabaseManager {
 
             Cursor cursor_star = writableDatabase.rawQuery("select * from Star where user_id is ?", new String[]{String.valueOf(user_id)});
             if(cursor_star.moveToFirst() && cursor_star.getCount() != 0){
-                List<Integer> stars = new ArrayList<>();
+                List<StarItem> stars = new ArrayList<>();
                 do{
                     @SuppressLint("Range") int recipe_id = cursor_star.getInt(cursor_star.getColumnIndex("recipe_id"));
-                    stars.add(recipe_id);
+                    @SuppressLint("Range") String date = cursor_star.getString(cursor_star.getColumnIndex("date"));
+                    stars.add(new StarItem(user_id, recipe_id, date));
                 } while (cursor_star.moveToNext());
 
                 item = new UserItem(user_id, username, password, height, weight, target_weight, stars);
@@ -347,10 +348,11 @@ public class DatabaseManager {
 
             Cursor cursor_star = writableDatabase.rawQuery("select * from Star where user_id is ?", new String[]{String.valueOf(user_id)});
             if(cursor_star.moveToFirst() && cursor_star.getCount() != 0){
-                List<Integer> stars = new ArrayList<>();
+                List<StarItem> stars = new ArrayList<>();
                 do{
                     @SuppressLint("Range") int recipe_id = cursor_star.getInt(cursor_star.getColumnIndex("recipe_id"));
-                    stars.add(recipe_id);
+                    @SuppressLint("Range") String date = cursor_star.getString(cursor_star.getColumnIndex("date"));
+                    stars.add(new StarItem(user_id, recipe_id, date));
                 } while (cursor_star.moveToNext());
 
                 item = new UserItem(user_id, username, password, height, weight, target_weight, stars);
@@ -372,9 +374,15 @@ public class DatabaseManager {
         if(isStared(user_id, recipe_id)){
            return false;
         }
+        GregorianCalendar calendar = new GregorianCalendar();
+        int yyyy = calendar.get(Calendar.YEAR);
+        int mm = calendar.get(Calendar.MONTH);
+        int dd = calendar.get(Calendar.DAY_OF_MONTH);
+
         ContentValues values = new ContentValues();
         values.put("recipe_id", recipe_id);
         values.put("user_id", user_id);
+        values.put("date", yyyy + "-" + mm + "-" + dd);
         writableDatabase.insert("Star", null, values);
         return true;
     }
@@ -390,6 +398,20 @@ public class DatabaseManager {
 
         cursor.close();
         return false;
+    }
+
+    public String getStarDate(int user_id, int recipe_id){
+        Cursor cursor = writableDatabase.rawQuery("select * from Star where user_id is ? and recipe_id is ?",
+                new String[]{String.valueOf(user_id), String.valueOf(recipe_id)});
+
+        if(cursor.moveToFirst() && cursor.getCount() != 0){
+            @SuppressLint("Range") String date = cursor.getString(cursor.getColumnIndex("date"));
+            cursor.close();
+            return date;
+        }
+
+        cursor.close();
+        return "1970-1-1";
     }
 
     public boolean removeStar(int user_id, int recipe_id){
