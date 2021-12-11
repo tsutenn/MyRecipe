@@ -77,9 +77,19 @@ public class MainActivity extends AppCompatActivity {
         query.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Log.d("Star test", dbManager.getStarDate(1, 1));
-                Log.d("Star test", dbManager.getStarDate(1, 2));
-                Log.d("Star test", dbManager.getStarDate(1, 3));
+                UserItem me = dbManager.queryUser(1);
+                Log.d("test update", me.toString());
+
+                if(dbManager.isStared(me.id, 5)){
+                    dbManager.removeStar(me.id, 5);
+                } else{
+                    dbManager.addStar(me.id, 5);
+                }
+
+
+                Log.d("before update", me.toString());
+                me = dbManager.update(me);
+                Log.d("after update", me.toString());
             }
         });
 
@@ -91,6 +101,7 @@ public class MainActivity extends AppCompatActivity {
         } catch (IOException e) {
             e.printStackTrace();
         }
+        System.out.println(bm);
         imageView.setImageBitmap(bm);
     }
 }

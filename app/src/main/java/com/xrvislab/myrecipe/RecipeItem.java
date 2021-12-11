@@ -13,8 +13,9 @@ public class RecipeItem {
 
     public final List<String> steps;
     public final List<String> images;
+    public final List<String> tags;
 
-    public RecipeItem(int id, String name, String information, String avatar, List<String> steps, List<String> images){
+    public RecipeItem(int id, String name, String information, String avatar, List<String> steps, List<String> images, List<String> tags){
         this.id = id;
         this.name = name;
         this.information = information;
@@ -22,8 +23,10 @@ public class RecipeItem {
 
         this.steps = new ArrayList<String>();
         this.images = new ArrayList<String>();
+        this.tags = new ArrayList<String>();
         this.steps.addAll(steps);
         this.images.addAll(images);
+        this.tags.addAll(tags);
     }
 
     @NonNull
@@ -33,6 +36,9 @@ public class RecipeItem {
         for(int i = 0; i < steps.size(); i++){
             rnt = rnt + " [" + i + "] " + steps.get(i) + " >" + images.get(i) + "\n";
         }
-        return rnt;
+        for(int i = 0; i < tags.size(); i++){
+            rnt = rnt + " " + tags.get(i);
+        }
+        return rnt + "\n";
     }
 }

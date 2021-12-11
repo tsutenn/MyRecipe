@@ -35,8 +35,7 @@ public class DatabaseManager {
                     instance = new DatabaseManager(context);
 
                     Cursor cursor = instance.writableDatabase.rawQuery("select * from Recipe", null);
-                    int amount = cursor.getCount();
-                    if(amount == 0){
+                    if(!cursor.moveToFirst() || cursor.getCount() == 0){
                         ContentValues recipe_values = new ContentValues();
                         ContentValues step_values = new ContentValues();
                         InputStreamReader is = null;
@@ -85,14 +84,33 @@ public class DatabaseManager {
                                     cnt++;
                                 }
                             }
+                            reader.close();
 
                         } catch (IOException e) {
                             e.printStackTrace();
                         }
-                        cursor.close();
+
+                        try{
+                            is = new InputStreamReader(context.getAssets().open("tags.txt"));
+                            BufferedReader reader = new BufferedReader(is);
+                            String line;
+
+                            while ((line = reader.readLine()) != null){
+                                String[] buffer = line.split(" ");
+                                int recipe_id = Integer.parseInt(buffer[0]);
+                                for(int i = 1; i < buffer.length; i++){
+                                    instance.addTagByRecipe(recipe_id, buffer[i]);
+                                }
+                            }
+                            reader.close();
+
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
 
                         Log.d("DatabaseManger", "#\n###################\n# Create database #\n###################");
                     }
+                    cursor.close();
                 }
             }
         }
@@ -122,7 +140,7 @@ public class DatabaseManager {
                     } while (cursor_steps.moveToNext());
                 }
 
-                recipes.add(new RecipeItem(id, name, information, avatar, steps, images));
+                recipes.add(new RecipeItem(id, name, information, avatar, steps, images, queryTagByRecipe(id)));
                 cursor_steps.close();
             } while (cursor.moveToNext());
         }
@@ -134,29 +152,61 @@ public class DatabaseManager {
     public RecipeItem query(int id){
         Cursor cursor = writableDatabase.rawQuery("select * from Recipe where recipe_id is ?", new String[]{String.valueOf(id)});
 
-        if(!cursor.moveToFirst()){
+        if(cursor.moveToFirst() && cursor.getCount() != 0){
+            @SuppressLint("Range") String name = cursor.getString(cursor.getColumnIndex("recipe_name"));
+            @SuppressLint("Range") String information = cursor.getString(cursor.getColumnIndex("recipe_info"));
+            @SuppressLint("Range") String avatar = cursor.getString(cursor.getColumnIndex("img_url"));
+            List<String> steps = new ArrayList<>();
+            List<String> images = new ArrayList<>();
+            Cursor cursor_steps = writableDatabase.rawQuery("select * from Step where recipe_id is ? order by step_no asc", new String[]{String.valueOf(id)});
+            if(cursor_steps.moveToFirst()){
+                do{
+                    @SuppressLint("Range") String step = cursor_steps.getString(cursor_steps.getColumnIndex("step_text"));
+                    @SuppressLint("Range") String image = cursor_steps.getString(cursor_steps.getColumnIndex("img_url"));
+                    steps.add(step);
+                    images.add(image);
+                } while (cursor_steps.moveToNext());
+            }
+
+            cursor_steps.close();
             cursor.close();
-            return null;
+            return new RecipeItem(id, name, information, avatar, steps, images, queryTagByRecipe(id));
         }
 
-        @SuppressLint("Range") String name = cursor.getString(cursor.getColumnIndex("recipe_name"));
-        @SuppressLint("Range") String information = cursor.getString(cursor.getColumnIndex("recipe_info"));
-        @SuppressLint("Range") String avatar = cursor.getString(cursor.getColumnIndex("img_url"));
-        List<String> steps = new ArrayList<>();
-        List<String> images = new ArrayList<>();
-        Cursor cursor_steps = writableDatabase.rawQuery("select * from Step where recipe_id is ? order by step_no asc", new String[]{String.valueOf(id)});
-        if(cursor_steps.moveToFirst()){
-            do{
-                @SuppressLint("Range") String step = cursor_steps.getString(cursor_steps.getColumnIndex("step_text"));
-                @SuppressLint("Range") String image = cursor_steps.getString(cursor_steps.getColumnIndex("img_url"));
-                steps.add(step);
-                images.add(image);
-            } while (cursor_steps.moveToNext());
+        cursor.close();
+        return null;
+    }
+
+    public List<RecipeItem> search(String str){
+        List<RecipeItem> recipes = new ArrayList<RecipeItem>();
+
+        Cursor cursor = writableDatabase.rawQuery("select * from Recipe where recipe_name like ?", new String[]{"%" + str + "%"});
+        if (cursor.moveToFirst()) {
+            do {
+                @SuppressLint("Range") int id = cursor.getInt(cursor.getColumnIndex("recipe_id"));
+                @SuppressLint("Range") String name = cursor.getString(cursor.getColumnIndex("recipe_name"));
+                @SuppressLint("Range") String information = cursor.getString(cursor.getColumnIndex("recipe_info"));
+                @SuppressLint("Range") String avatar = cursor.getString(cursor.getColumnIndex("img_url"));
+
+                List<String> steps = new ArrayList<>();
+                List<String> images = new ArrayList<>();
+                Cursor cursor_steps = writableDatabase.rawQuery("select * from Step where recipe_id is ? order by step_no asc", new String[]{String.valueOf(id)});
+                if(cursor_steps.moveToFirst()){
+                    do{
+                        @SuppressLint("Range") String step = cursor_steps.getString(cursor_steps.getColumnIndex("step_text"));
+                        @SuppressLint("Range") String image = cursor_steps.getString(cursor_steps.getColumnIndex("img_url"));
+                        steps.add(step);
+                        images.add(image);
+                    } while (cursor_steps.moveToNext());
+                }
+
+                recipes.add(new RecipeItem(id, name, information, avatar, steps, images, queryTagByRecipe(id)));
+                cursor_steps.close();
+            } while (cursor.moveToNext());
         }
-        cursor_steps.close();
         cursor.close();
 
-        return new RecipeItem(id, name, information, avatar, steps, images);
+        return recipes;
     }
 
     public List<RecipeItem> randomQuery(int num) {
@@ -376,7 +426,7 @@ public class DatabaseManager {
         }
         GregorianCalendar calendar = new GregorianCalendar();
         int yyyy = calendar.get(Calendar.YEAR);
-        int mm = calendar.get(Calendar.MONTH);
+        int mm = calendar.get(Calendar.MONTH) + 1;
         int dd = calendar.get(Calendar.DAY_OF_MONTH);
 
         ContentValues values = new ContentValues();
@@ -423,5 +473,95 @@ public class DatabaseManager {
         }
 
         return false;
+    }
+
+    public UserItem update(UserItem userItem){
+        userItem = this.queryUser(userItem.id);
+        return userItem;
+    }
+
+    public String queryTag(int tag_id){
+        Cursor cursor = writableDatabase.rawQuery("select * from Tag where tag_id is ?", new String[]{String.valueOf(tag_id)});
+        if(cursor.moveToFirst() && cursor.getCount() != 0){
+            @SuppressLint("Range") String tag_text = cursor.getString(cursor.getColumnIndex("tag_text"));
+            cursor.close();
+            return tag_text;
+        }
+        cursor.close();
+        return null;
+    }
+
+    public int queryTag(String tag_text){
+        Cursor cursor = writableDatabase.rawQuery("select * from Tag where tag_text is ?", new String[]{tag_text});
+        if(cursor.moveToFirst() && cursor.getCount() != 0){
+            @SuppressLint("Range") int tag_id = cursor.getInt(cursor.getColumnIndex("tag_id"));
+            cursor.close();
+            return tag_id;
+        }
+        cursor.close();
+        return -1;
+    }
+
+    public int addTag(String tag_text){
+        Cursor cursor = writableDatabase.rawQuery("select * from Tag where tag_text is ?", new String[]{tag_text});
+        int rnt = -1;
+
+        if(cursor.moveToFirst() && cursor.getCount() != 0){
+            @SuppressLint("Range") int tag_id = cursor.getInt(cursor.getColumnIndex("tag_id"));
+            rnt = tag_id;
+        }
+
+        else{
+            ContentValues values = new ContentValues();
+            values.put("tag_text", tag_text);
+            writableDatabase.insert("Tag", null, values);
+
+            cursor = writableDatabase.rawQuery("select * from Tag where tag_text is ?", new String[]{tag_text});
+            cursor.moveToFirst();
+            @SuppressLint("Range") int tag_id = cursor.getInt(cursor.getColumnIndex("tag_id"));
+            rnt = tag_id;
+        }
+
+        cursor.close();
+        return rnt;
+    }
+
+    public void addTagByRecipe(int recipe_id, String tag_text){
+        int tag_id = addTag(tag_text);
+        ContentValues values = new ContentValues();
+        values.put("recipe_id", recipe_id);
+        values.put("tag_id", tag_id);
+        writableDatabase.insert("Has_tag", null, values);
+    }
+
+    public List<String> queryTagByRecipe(int recipe_id){
+        List<String> tags = new ArrayList<String>();
+
+        Cursor cursor = writableDatabase.rawQuery("select * from Has_tag where recipe_id = ?", new String[]{String.valueOf(recipe_id)});
+        if(cursor.moveToFirst() && cursor.getCount() != 0){
+            do{
+                @SuppressLint("Range") int tag_id = cursor.getInt(cursor.getColumnIndex("tag_id"));
+                tags.add(queryTag(tag_id));
+            } while(cursor.moveToNext());
+        }
+
+        cursor.close();
+        return tags;
+    }
+
+    public List<RecipeItem> queryRecipeByTag(String tag_text){
+        List<RecipeItem> recipes = new ArrayList<RecipeItem>();
+        int tag_id = queryTag(tag_text);
+
+        Cursor cursor = writableDatabase.rawQuery("select * from Has_tag where tag_id = ?", new String[]{String.valueOf(tag_id)});
+        if(cursor.moveToFirst() && cursor.getCount() != 0){
+            do{
+                @SuppressLint("Range") int recipe_id = cursor.getInt(cursor.getColumnIndex("recipe_id"));
+                recipes.add(query(recipe_id));
+            } while(cursor.moveToNext());
+        }
+
+        cursor.close();
+        return recipes;
     }
 }

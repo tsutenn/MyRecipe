@@ -33,6 +33,15 @@ public class MyDatabaseHelper extends SQLiteOpenHelper {
             "user_id integer," +
             "date text)";
 
+    public static final String CREATE_TAG = "create table Tag (" +
+            "tag_id integer primary key autoincrement," +
+            "tag_text text)";
+
+    public static final String CREATE_HAS_TAG = "create table Has_tag (" +
+            "relationship_id integer primary key autoincrement," +
+            "recipe_id integer," +
+            "tag_id integer)";
+
     private Context mContext;
 
     public MyDatabaseHelper(Context context, String name, SQLiteDatabase.CursorFactory factory, int version) {
@@ -45,6 +54,8 @@ public class MyDatabaseHelper extends SQLiteOpenHelper {
         db.execSQL(CREATE_USER);
         db.execSQL(CREATE_STEP);
         db.execSQL(CREATE_STAR);
+        db.execSQL(CREATE_TAG);
+        db.execSQL(CREATE_HAS_TAG);
         Toast.makeText(mContext, "Creation succeed", Toast.LENGTH_SHORT).show();
     }
     @Override
@@ -53,6 +64,8 @@ public class MyDatabaseHelper extends SQLiteOpenHelper {
         db.execSQL("drop table if exists User");
         db.execSQL("drop table if exists Step");
         db.execSQL("drop table if exists Star");
+        db.execSQL("drop table if exists Tag");
+        db.execSQL("drop table if exists Has_tag");
         onCreate(db); //先将table删除，再创建db
     }
     //定义onUpgrade()->MyDatabaseHelper.java
